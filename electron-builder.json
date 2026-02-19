@@ -1,0 +1,37 @@
+{
+  "appId": "com.eyesafer.app",
+  "productName": "EyeSafer",
+  "copyright": "Copyright © 2024 EyeSafer",
+  "directories": {
+    "output": "dist",
+    "buildResources": "resources"
+  },
+  "files": [
+    "out/**/*",
+    "resources/**/*"
+  ],
+  "win": {
+    "target": "nsis",
+    "icon": "resources/icons/icon.ico",
+    "requestedExecutionLevel": "asInvoker"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true
+  },
+  "mac": {
+    "target": "dmg",
+    "icon": "resources/icons/icon.icns",
+    "category": "public.app-category.healthcare-fitness"
+  },
+  "dmg": {
+    "title": "EyeSafer"
+  },
+  "linux": {
+    "target": "AppImage",
+    "icon": "resources/icons/icon.png",
+    "category": "Utility"
+  }
+}
