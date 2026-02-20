@@ -304,6 +304,7 @@ class DatabaseService {
 
   getBlinkMinutes(date: string): BlinkMinute[] {
     if (!this.db) return []
+    this.flushMinuteBuffer()
     const result = this.db.exec(
       `SELECT id, session_id, minute_ts, bpm, avg_ear, min_ear, blink_count, is_low_blink
        FROM blink_minutes
@@ -332,6 +333,7 @@ class DatabaseService {
 
   getSessions(date: string): Session[] {
     if (!this.db) return []
+    this.flushMinuteBuffer()
     const result = this.db.exec(
       `SELECT id, started_at, ended_at, duration_seconds, avg_bpm,
               total_blinks, low_blink_seconds, stimulations_triggered
@@ -348,6 +350,7 @@ class DatabaseService {
 
   getDailySummary(date: string): DailySummary | null {
     if (!this.db) return null
+    this.flushMinuteBuffer()
     this.updateDailySummary(date)
     const result = this.db.exec(
       `SELECT date, total_screen_time_minutes, avg_bpm, total_blinks,

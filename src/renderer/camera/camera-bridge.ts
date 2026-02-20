@@ -37,7 +37,8 @@ class CameraBridge {
   private faceLandmarker: FaceLandmarker | null = null
   private video: HTMLVideoElement | null = null
   private animationFrameId: number | null = null
-  private isRunning = false
+  private _isRunning = false
+  get running(): boolean { return this._isRunning }
   private readonly targetFps = 20
   private readonly frameInterval = 1000 / this.targetFps
   private lastFrameTime = 0
@@ -116,6 +117,15 @@ class CameraBridge {
       return
     }
 
+    const started = await this.tryStart(deviceId)
+    if (!started && deviceId) {
+      // Specific device failed — fall back to default camera
+      console.warn('[camera-bridge] Specific deviceId failed, falling back to default camera')
+      await this.tryStart(undefined)
+    }
+  }
+
+  private async tryStart(deviceId?: string): Promise<boolean> {
     try {
       const constraints: MediaStreamConstraints = {
         video: deviceId
@@ -131,17 +141,19 @@ class CameraBridge {
       this.video.muted = true
       await this.video.play()
 
-      this.isRunning = true
+      this._isRunning = true
       this.captureLoop()
-      console.log('[camera-bridge] Camera started')
+      console.log('[camera-bridge] Camera started', deviceId ?? '(default)')
+      return true
     } catch (err) {
       console.error('[camera-bridge] Start failed:', err)
       await this.stop()
+      return false
     }
   }
 
   private captureLoop(): void {
-    if (!this.isRunning) return
+    if (!this._isRunning) return
     const now = performance.now()
     if (now - this.lastFrameTime >= this.frameInterval) {
       this.lastFrameTime = now
@@ -299,7 +311,7 @@ class CameraBridge {
   }
 
   async stop(): Promise<void> {
-    this.isRunning = false
+    this._isRunning = false
     if (this.animationFrameId !== null) {
       cancelAnimationFrame(this.animationFrameId)
       this.animationFrameId = null
@@ -328,6 +340,13 @@ bridge.init()
       maxBlinkDurationMs: settings.maxBlinkDurationMs
     })
     await bridge.start(settings.selectedCameraId ?? undefined)
+
+    // If camera didn't start (driver not ready yet on Windows), retry once after 2 s
+    if (!bridge.running) {
+      console.warn('[camera-bridge] Camera not running after init, retrying in 2s...')
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      await bridge.start(settings.selectedCameraId ?? undefined)
+    }
   })
   .catch(err => console.error('[camera-bridge] Init failed:', err))
 
