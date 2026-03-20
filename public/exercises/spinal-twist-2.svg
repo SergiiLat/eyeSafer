@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <rect width="300" height="300" fill="#1a2233" rx="10"/>
+  
+  <line x1="108" y1="165" x2="108" y2="228" stroke="#475569" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="108" y1="165" x2="158" y2="165" stroke="#475569" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="108" y1="228" x2="192" y2="228" stroke="#475569" stroke-width="2.5" stroke-linecap="round"/><line x1="150" y1="220" x2="150" y2="135" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/><line x1="150" y1="135" x2="150" y2="110" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="150" cy="90" r="20" fill="none" stroke="#cbd5e1" stroke-width="3"/><line x1="150" y1="220" x2="122" y2="212" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+  <line x1="150" y1="220" x2="178" y2="212" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+  <line x1="122" y1="212" x2="122" y2="228" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+  <line x1="178" y1="212" x2="178" y2="228" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/><line x1="150" y1="135" x2="108" y2="163" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+  <line x1="150" y1="135" x2="122" y2="198" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="122" cy="202" r="7" fill="#60a5fa"/>
+  <text x="60" y="208" fill="#60a5fa" font-size="10" font-family="system-ui,sans-serif">right hand</text>
+  <text x="60" y="220" fill="#60a5fa" font-size="10" font-family="system-ui,sans-serif">on left knee</text>
+  <text x="150" y="285" text-anchor="middle" fill="#475569" font-size="12" font-family="system-ui,sans-serif">Right hand on left knee</text>
+
+</svg>

@@ -34,13 +34,36 @@
     <p class="text-sm text-surface-200">Application behaviour and notifications</p>
   </div>
 
+  <!-- Active Features -->
+  <section class="space-y-4">
+    <h3 class="text-sm font-medium text-surface-200 uppercase tracking-wider">Active Features</h3>
+    <Toggle
+      checked={settings.blinkEnabled}
+      label="Blink Monitoring"
+      description="Visual micro-stimulation reminders to keep your blink rate healthy"
+      onChange={(v) => onUpdate({ blinkEnabled: v })}
+    />
+    <Toggle
+      checked={settings.exercisesEnabled}
+      label="Posture Exercises"
+      description="Periodic neck, shoulder and spine stretch reminders"
+      onChange={(v) => onUpdate({ exercisesEnabled: v })}
+    />
+    <Toggle
+      checked={settings.twentyTwentyEnabled}
+      label="20-20-20 Rule"
+      description="Every 20 minutes, look 6 metres away for 20 seconds to rest your eyes"
+      onChange={(v) => onUpdate({ twentyTwentyEnabled: v })}
+    />
+  </section>
+
   <!-- Startup -->
   <section class="space-y-4">
     <h3 class="text-sm font-medium text-surface-200 uppercase tracking-wider">Startup</h3>
     <Toggle
       checked={settings.launchOnStartup}
       label="Launch at login"
-      description="Start EyeSafer automatically when you log in"
+      description="Start HealthSafer automatically when you log in"
       onChange={(v) => onUpdate({ launchOnStartup: v })}
     />
   </section>
@@ -70,17 +93,6 @@
         </label>
       {/each}
     </div>
-  </section>
-
-  <!-- 20-20-20 Rule -->
-  <section class="space-y-4">
-    <h3 class="text-sm font-medium text-surface-200 uppercase tracking-wider">20-20-20 Rule</h3>
-    <Toggle
-      checked={settings.twentyTwentyEnabled}
-      label="Enable 20-20-20 reminders"
-      description="Every 20 minutes, look 6 metres away for 20 seconds to rest your eyes"
-      onChange={(v) => onUpdate({ twentyTwentyEnabled: v })}
-    />
   </section>
 
   <!-- Do Not Disturb -->

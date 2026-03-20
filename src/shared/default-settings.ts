@@ -1,4 +1,4 @@
-import type { AppSettings, StimulationMethod, Intensity, StimulationParams } from './types'
+import type { AppSettings, StimulationMethod, Intensity, StimulationParams, EffectOrder, ExerciseId } from './types'
 import {
   DEFAULT_EAR_THRESHOLD,
   DEFAULT_CONSECUTIVE_FRAMES,
@@ -15,6 +15,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   dndEnabled: false,
   dndUntil: null,
 
+  blinkEnabled: true,
+  exercisesEnabled: true,
+
   enabledMethods: {
     cornerMarkers: true,
     blurOverlay: true,
@@ -24,9 +27,24 @@ export const DEFAULT_SETTINGS: AppSettings = {
     nearFarFocus: false,
     peripheralTriggers: false,
     guidedBlink: false,
-    saccadeTraining: false
+    saccadeTraining: false,
+    cornerFocus: true,
+    pseudoBlur: false,
+    brightnessShift: false,
+    peripheralDrift: false
   },
   intensity: 'medium',
+  effectOrder: 'random' as EffectOrder,
+
+  enabledExercises: {
+    chinTuck: true,
+    chestOpener: true,
+    neckMassage: true,
+    shoulderRolls: true,
+    spinalTwist: true
+  } as Record<ExerciseId, boolean>,
+  exerciseIntervalMinutes: 45,
+  exerciseOrder: 'sequential' as EffectOrder,
 
   activeWindow: {
     start: '09:00',
@@ -100,5 +118,29 @@ export const INTENSITY_PARAMS: MethodIntensityParams = {
     low: { size: 12, opacity: 0.70, durationMs: 4400 },
     medium: { size: 16, opacity: 0.85, durationMs: 5500 },
     high: { size: 20, opacity: 1.00, durationMs: 6600 }
+  },
+  // Animated rotating focus target that hops between screen corners
+  cornerFocus: {
+    low:    { size: 24, opacity: 0.75, durationMs:  8000 },
+    medium: { size: 32, opacity: 0.90, durationMs: 10000 },
+    high:   { size: 40, opacity: 1.00, durationMs: 12000 }
+  },
+  // Brief frosted-glass style blur pulse over the screen
+  pseudoBlur: {
+    low:    { size: 0, opacity: 0.20, durationMs: 600  },
+    medium: { size: 0, opacity: 0.35, durationMs: 800  },
+    high:   { size: 0, opacity: 0.50, durationMs: 1000 }
+  },
+  // Subtle screen brightness/contrast flash
+  brightnessShift: {
+    low:    { size: 0, opacity: 0.12, durationMs: 500 },
+    medium: { size: 0, opacity: 0.20, durationMs: 700 },
+    high:   { size: 0, opacity: 0.30, durationMs: 900 }
+  },
+  // Glowing dot drifting slowly around the screen perimeter
+  peripheralDrift: {
+    low:    { size: 14, opacity: 0.65, durationMs:  8000 },
+    medium: { size: 20, opacity: 0.80, durationMs: 10000 },
+    high:   { size: 26, opacity: 1.00, durationMs: 12000 }
   }
 }

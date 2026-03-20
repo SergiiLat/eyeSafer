@@ -7,8 +7,14 @@ const schema: Record<keyof AppSettings, { type: string | string[] }> = {
   scheduleMode: { type: 'string' },
   dndEnabled: { type: 'boolean' },
   dndUntil: { type: ['string', 'null'] },
+  blinkEnabled: { type: 'boolean' },
+  exercisesEnabled: { type: 'boolean' },
   enabledMethods: { type: 'object' },
   intensity: { type: 'string' },
+  effectOrder: { type: 'string' },
+  enabledExercises: { type: 'object' },
+  exerciseIntervalMinutes: { type: 'number' },
+  exerciseOrder: { type: 'string' },
   activeWindow: { type: 'object' },
   weekendsEnabled: { type: 'boolean' },
   selectedCameraId: { type: ['string', 'null'] },
@@ -27,7 +33,7 @@ const schema: Record<keyof AppSettings, { type: string | string[] }> = {
 }
 
 const store = new Store<AppSettings>({
-  name: 'eyesafer-settings',
+  name: 'healthsafer-settings',
   defaults: DEFAULT_SETTINGS,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   schema: schema as any

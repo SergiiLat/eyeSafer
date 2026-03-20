@@ -6,9 +6,10 @@ import { IPC } from '../shared/ipc-channels'
 import { storeService } from './services/store.service'
 import { schedulerService } from './services/scheduler.service'
 import { stimulationService } from './services/stimulation.service'
+import { exerciseService } from './services/exercise.service'
 import { databaseService } from './services/database.service'
 import { getCameraWindow } from './windows/camera'
-import type { StimulationMethod, BlinkData } from '../shared/types'
+import type { StimulationMethod, BlinkData, ExerciseId } from '../shared/types'
 import { trayManager } from './tray'
 
 // Cache of windows that need blink data
@@ -88,7 +89,7 @@ export function registerIpcHandlers(): void {
     if (Notification.isSupported() && now - lastLowBlinkNotification > LOW_BLINK_NOTIFICATION_COOLDOWN_MS) {
       lastLowBlinkNotification = now
       new Notification({
-        title: 'EyeSafer — Low Blink Rate',
+        title: 'HealthSafer — Low Blink Rate',
         body: `You've been blinking only ${bpm} times/min. Remember to blink more often!`,
         silent: true
       }).show()
@@ -98,6 +99,14 @@ export function registerIpcHandlers(): void {
   // Stimulation
   ipcMain.handle(IPC.STIMULATION.TEST, (_, method: StimulationMethod) => {
     stimulationService.trigger(method)
+  })
+
+  ipcMain.handle(IPC.STIMULATION.TEST_LOOP, (_, method: StimulationMethod, seconds: number) => {
+    stimulationService.startTestLoop(method, seconds)
+  })
+
+  ipcMain.handle(IPC.STIMULATION.TEST_LOOP_STOP, () => {
+    stimulationService.stopTestLoop()
   })
 
   ipcMain.on(IPC.STIMULATION.COMPLETE, () => {
@@ -172,7 +181,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.REPORTS.EXPORT_CSV, async (_, from: string, to: string) => {
     const csv = databaseService.exportCsv(from, to)
     const { filePath } = await dialog.showSaveDialog({
-      defaultPath: join(app.getPath('downloads'), `eyesafer-${from}-to-${to}.csv`),
+      defaultPath: join(app.getPath('downloads'), `healthsafer-${from}-to-${to}.csv`),
       filters: [{ name: 'CSV', extensions: ['csv'] }]
     })
     if (filePath) {
@@ -180,6 +189,33 @@ export function registerIpcHandlers(): void {
       return filePath
     }
     return null
+  })
+
+  // Exercise
+  ipcMain.handle(IPC.EXERCISE.TEST, (_, exerciseId: ExerciseId) => {
+    exerciseService.trigger(exerciseId)
+  })
+
+  ipcMain.on(IPC.EXERCISE.DONE, (_, exerciseId: ExerciseId) => {
+    databaseService.logExerciseEvent(exerciseId, true)
+    exerciseService.broadcastDismiss()
+    exerciseService.setWindowsInteractive(false)
+    log.info(`[exercise] Completed: ${exerciseId}`)
+  })
+
+  ipcMain.on(IPC.EXERCISE.SKIP, (_, exerciseId: ExerciseId) => {
+    databaseService.logExerciseEvent(exerciseId, false)
+    exerciseService.broadcastDismiss()
+    exerciseService.setWindowsInteractive(false)
+    log.info(`[exercise] Skipped: ${exerciseId}`)
+  })
+
+  ipcMain.handle(IPC.EXERCISE.GET_EVENTS, (_, date: string) => {
+    return databaseService.getExerciseEvents(date)
+  })
+
+  ipcMain.handle(IPC.EXERCISE.GET_SUMMARY, (_, date: string) => {
+    return databaseService.getExerciseDailySummary(date)
   })
 }
 

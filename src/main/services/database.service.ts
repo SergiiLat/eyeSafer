@@ -9,7 +9,10 @@ import type {
   Session,
   DailySummary,
   WeeklySummary,
-  StimulationMethod
+  StimulationMethod,
+  ExerciseId,
+  ExerciseEvent,
+  ExerciseDailySummary
 } from '../../shared/types'
 
 // createRequire with __filename works in the CJS-compiled main process
@@ -40,7 +43,7 @@ class DatabaseService {
   private sessionLowBlinkSeconds = 0
 
   async init(): Promise<void> {
-    this.dbPath = join(app.getPath('userData'), 'eyesafer.db')
+    this.dbPath = join(app.getPath('userData'), 'healthsafer.db')
     log.info(`[db] Database path: ${this.dbPath}`)
 
     // Dynamic import first so errors are surfaced before WASM loading
@@ -134,9 +137,18 @@ class DatabaseService {
         health_score INTEGER
       );
 
+      CREATE TABLE IF NOT EXISTS exercise_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id INTEGER REFERENCES sessions(id),
+        exercise_id TEXT NOT NULL,
+        triggered_at TEXT NOT NULL,
+        completed INTEGER NOT NULL DEFAULT 1
+      );
+
       CREATE INDEX IF NOT EXISTS idx_blink_minutes_ts ON blink_minutes(minute_ts);
       CREATE INDEX IF NOT EXISTS idx_blink_minutes_session ON blink_minutes(session_id);
       CREATE INDEX IF NOT EXISTS idx_daily_date ON daily_summaries(date);
+      CREATE INDEX IF NOT EXISTS idx_exercise_events_ts ON exercise_events(triggered_at);
     `)
   }
 
@@ -256,6 +268,55 @@ class DatabaseService {
       'INSERT INTO stimulations (session_id, triggered_at, method, bpm_at_trigger) VALUES (?, ?, ?, ?)',
       [this.currentSessionId, new Date().toISOString(), method, bpm]
     )
+  }
+
+  // ── Exercise logging ──────────────────────────────────────────────────────
+
+  logExerciseEvent(exerciseId: ExerciseId, completed: boolean): void {
+    if (!this.db) return
+    this.db.run(
+      'INSERT INTO exercise_events (session_id, exercise_id, triggered_at, completed) VALUES (?, ?, ?, ?)',
+      [this.currentSessionId, exerciseId, new Date().toISOString(), completed ? 1 : 0]
+    )
+  }
+
+  getExerciseEvents(date: string): ExerciseEvent[] {
+    if (!this.db) return []
+    const result = this.db.exec(
+      `SELECT id, session_id, exercise_id, triggered_at, completed
+       FROM exercise_events
+       WHERE substr(triggered_at, 1, 10) = ?
+       ORDER BY triggered_at ASC`,
+      [date]
+    )
+    return this.rowsToObjects<{ id: number; sessionId: number | null; exerciseId: string; triggeredAt: string; completed: number }>(
+      result, ['id', 'sessionId', 'exerciseId', 'triggeredAt', 'completed']
+    ).map(r => ({ ...r, exerciseId: r.exerciseId as ExerciseId, completed: r.completed === 1 }))
+  }
+
+  getExerciseDailySummary(date: string): ExerciseDailySummary {
+    if (!this.db) return { date, totalTriggered: 0, totalCompleted: 0, totalSkipped: 0, completionRate: 0 }
+    const result = this.db.exec(
+      `SELECT
+         COUNT(*) as total,
+         SUM(completed) as completed,
+         SUM(CASE WHEN completed=0 THEN 1 ELSE 0 END) as skipped
+       FROM exercise_events
+       WHERE substr(triggered_at, 1, 10) = ?`,
+      [date]
+    )
+    const row = result[0]?.values[0]
+    if (!row) return { date, totalTriggered: 0, totalCompleted: 0, totalSkipped: 0, completionRate: 0 }
+    const total = (row[0] as number) ?? 0
+    const completed = (row[1] as number) ?? 0
+    const skipped = (row[2] as number) ?? 0
+    return {
+      date,
+      totalTriggered: total,
+      totalCompleted: completed,
+      totalSkipped: skipped,
+      completionRate: total > 0 ? Math.round((completed / total) * 100) : 0
+    }
   }
 
   // ── Daily summary ──────────────────────────────────────────────────────────

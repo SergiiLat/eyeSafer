@@ -1,10 +1,10 @@
 {
-  "name": "eyesafer",
+  "name": "healthsafer",
   "version": "1.0.0",
   "description": "Prevents eye strain through blink monitoring and visual micro-stimulation",
   "main": "out/main/index.js",
   "type": "module",
-  "author": "EyeSafer",
+  "author": "HealthSafer",
   "private": true,
   "scripts": {
     "dev": "electron-vite dev",

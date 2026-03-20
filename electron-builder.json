@@ -1,7 +1,7 @@
 {
-  "appId": "com.eyesafer.app",
-  "productName": "EyeSafer",
-  "copyright": "Copyright © 2024 EyeSafer",
+  "appId": "com.healthsafer.app",
+  "productName": "HealthSafer",
+  "copyright": "Copyright © 2024 HealthSafer",
   "directories": {
     "output": "dist",
     "buildResources": "resources"
@@ -27,7 +27,7 @@
     "category": "public.app-category.healthcare-fitness"
   },
   "dmg": {
-    "title": "EyeSafer"
+    "title": "HealthSafer"
   },
   "linux": {
     "target": "AppImage",

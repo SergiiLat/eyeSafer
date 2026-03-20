@@ -13,7 +13,7 @@
 <div class="space-y-8">
   <div>
     <h2 class="text-lg font-semibold text-white mb-1">About</h2>
-    <p class="text-sm text-surface-200">EyeSafer — Protect your eyes from digital strain</p>
+    <p class="text-sm text-surface-200">HealthSafer — Protect your eyes from digital strain</p>
   </div>
 
   <div class="flex items-center gap-4">
@@ -21,7 +21,7 @@
       <span class="text-3xl">👁</span>
     </div>
     <div>
-      <h3 class="text-xl font-bold text-white">EyeSafer</h3>
+      <h3 class="text-xl font-bold text-white">HealthSafer</h3>
       {#if version}
         <p class="text-sm text-surface-200">Version {version}</p>
       {/if}
@@ -30,7 +30,7 @@
 
   <div class="space-y-3 text-sm text-surface-200">
     <p>
-      EyeSafer monitors your blink rate in real-time using your webcam and MediaPipe Face Mesh,
+      HealthSafer monitors your blink rate in real-time using your webcam and MediaPipe Face Mesh,
       then reminds you to exercise your eyes with visual micro-stimulation overlays.
     </p>
     <p>

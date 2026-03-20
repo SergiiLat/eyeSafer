@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <rect width="300" height="300" fill="#1a2233" rx="10"/>
+  
+  <line x1="108" y1="165" x2="108" y2="228" stroke="#475569" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="108" y1="165" x2="158" y2="165" stroke="#475569" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="108" y1="228" x2="192" y2="228" stroke="#475569" stroke-width="2.5" stroke-linecap="round"/><line x1="150" y1="220" x2="150" y2="135" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/><line x1="150" y1="135" x2="132" y2="110" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="132" cy="90" r="20" fill="none" stroke="#cbd5e1" stroke-width="3"/><line x1="150" y1="220" x2="122" y2="212" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+  <line x1="150" y1="220" x2="178" y2="212" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+  <line x1="122" y1="212" x2="122" y2="228" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+  <line x1="178" y1="212" x2="178" y2="228" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+  <line x1="150" y1="135" x2="122" y2="198" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="122" cy="202" r="7" fill="#60a5fa"/>
+  <path d="M172 110 A38 38 0 0 1 112 105" fill="none" stroke="#60a5fa" stroke-width="2.5" marker-end="url(#tw1)"/>
+  <defs><marker id="tw1" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#60a5fa"/></marker></defs>
+  <circle cx="240" cy="72" r="26" fill="none" stroke="#60a5fa" stroke-width="2.5"/>
+  <text x="240" y="77" text-anchor="middle" fill="#60a5fa" font-size="15" font-weight="bold" font-family="system-ui,sans-serif">15s</text>
+  <text x="150" y="285" text-anchor="middle" fill="#60a5fa" font-size="12" font-family="system-ui,sans-serif">Twist left · hold 15s</text>
+
+</svg>

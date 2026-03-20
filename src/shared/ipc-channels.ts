@@ -20,7 +20,9 @@ export const IPC = {
   STIMULATION: {
     PLAY: 'stimulation:play',
     COMPLETE: 'stimulation:complete',
-    TEST: 'stimulation:test'
+    TEST: 'stimulation:test',
+    TEST_LOOP: 'stimulation:test-loop',
+    TEST_LOOP_STOP: 'stimulation:test-loop-stop'
   },
   OVERLAY: {
     TRIGGER: 'overlay:trigger',
@@ -59,5 +61,15 @@ export const IPC = {
     GET_SESSIONS: 'reports:get-sessions',     // (date: string) → Session[]
     GET_WEEKLY: 'reports:get-weekly',         // (weekStart: string) → WeeklySummary
     EXPORT_CSV: 'reports:export-csv'          // (from, to) → filePath
+  },
+  EXERCISE: {
+    PLAY: 'exercise:play',             // main → overlay: ExerciseTrigger
+    DISMISS: 'exercise:dismiss',       // main → all overlays: hide exercise UI
+    DONE: 'exercise:done',             // overlay → main: exerciseId (completed)
+    SKIP: 'exercise:skip',             // overlay → main: exerciseId (skipped)
+    TEST: 'exercise:test',             // settings → main: ExerciseId
+    SET_INTERACTIVE: 'exercise:set-interactive', // overlay → main: boolean
+    GET_EVENTS: 'exercise:get-events',          // (date) → ExerciseEvent[]
+    GET_SUMMARY: 'exercise:get-summary'         // (date) → ExerciseDailySummary
   }
 } as const

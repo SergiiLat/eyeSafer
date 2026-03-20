@@ -2,7 +2,7 @@
   import Toggle from '../components/Toggle.svelte'
   import Slider from '../components/Slider.svelte'
   import TestButton from '../components/TestButton.svelte'
-  import type { AppSettings, StimulationMethod, Intensity } from '../../../shared/types'
+  import type { AppSettings, StimulationMethod, Intensity, EffectOrder } from '../../../shared/types'
 
   export let settings: AppSettings
   export let onUpdate: (patch: Partial<AppSettings>) => void
@@ -61,6 +61,30 @@
       label: 'Saccade Training',
       description: 'Alternating left-right dots train rapid, accurate eye movements',
       icon: '↔'
+    },
+    {
+      id: 'cornerFocus',
+      label: 'Corner Focus',
+      description: 'Animated rotating focus target hops between corners to draw your gaze',
+      icon: '🎯'
+    },
+    {
+      id: 'pseudoBlur',
+      label: 'Pseudo Blur',
+      description: 'Frosted-glass blur pulses relax focal depth and ciliary muscle',
+      icon: '💫'
+    },
+    {
+      id: 'brightnessShift',
+      label: 'Brightness Shift',
+      description: 'Brief brightness/contrast micro-flash to stimulate photoreceptors',
+      icon: '☀️'
+    },
+    {
+      id: 'peripheralDrift',
+      label: 'Peripheral Drift',
+      description: 'Glowing orb drifts slowly around the screen edge for peripheral tracking',
+      icon: '🌙'
     }
   ]
 
@@ -68,6 +92,11 @@
     { value: 'low', label: 'Low' },
     { value: 'medium', label: 'Medium' },
     { value: 'high', label: 'High' }
+  ]
+
+  const orderOptions: { value: EffectOrder; label: string; desc: string }[] = [
+    { value: 'random', label: 'Random', desc: 'Each trigger picks a random effect from enabled ones' },
+    { value: 'sequential', label: 'Sequential', desc: 'Rotates through enabled effects one by one in order' }
   ]
 
   const intensityIndex: Record<Intensity, number> = { low: 0, medium: 1, high: 2 }
@@ -128,6 +157,24 @@
         </div>
       </div>
     {/each}
+  </section>
+
+  <!-- Playback Order -->
+  <section class="space-y-3">
+    <h3 class="text-sm font-medium text-surface-200 uppercase tracking-wider">Playback Order</h3>
+    <div class="flex gap-3">
+      {#each orderOptions as opt}
+        <button
+          on:click={() => onUpdate({ effectOrder: opt.value })}
+          class="flex-1 px-4 py-3 text-sm rounded-xl border transition-colors text-left {settings.effectOrder === opt.value
+            ? 'bg-primary-600/20 border-primary-500 text-white'
+            : 'bg-surface-800 border-surface-700 text-surface-300 hover:border-surface-500 hover:text-white'}"
+        >
+          <span class="block font-medium mb-0.5">{opt.label}</span>
+          <span class="block text-xs {settings.effectOrder === opt.value ? 'text-primary-300' : 'text-surface-400'}">{opt.desc}</span>
+        </button>
+      {/each}
+    </div>
   </section>
 
   <!-- Intensity -->

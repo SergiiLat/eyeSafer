@@ -102,6 +102,12 @@ export class SchedulerService {
       return
     }
 
+    // Respect feature toggles
+    if (!settings.blinkEnabled) {
+      this.scheduleNext()
+      return
+    }
+
     stimulationService.triggerRandom()
     this.scheduleNext()
   }

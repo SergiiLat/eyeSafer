@@ -2,6 +2,7 @@ import { BrowserWindow, screen } from 'electron'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import { stimulationService } from '../services/stimulation.service'
+import { exerciseService } from '../services/exercise.service'
 
 const overlayWindows: Map<number, BrowserWindow> = new Map()
 
@@ -62,12 +63,16 @@ export function spawnOverlays(): void {
     }
   }
 
-  stimulationService.setOverlayWindows(Array.from(overlayWindows.values()))
+  const allWindows = Array.from(overlayWindows.values())
+  stimulationService.setOverlayWindows(allWindows)
+  exerciseService.setOverlayWindows(allWindows)
 
   screen.on('display-added', (_, display) => {
     const win = createOverlayForDisplay(display.id)
     overlayWindows.set(display.id, win)
-    stimulationService.setOverlayWindows(Array.from(overlayWindows.values()))
+    const updated = Array.from(overlayWindows.values())
+    stimulationService.setOverlayWindows(updated)
+    exerciseService.setOverlayWindows(updated)
   })
 
   screen.on('display-removed', (_, display) => {
@@ -76,7 +81,9 @@ export function spawnOverlays(): void {
       win.close()
     }
     overlayWindows.delete(display.id)
-    stimulationService.setOverlayWindows(Array.from(overlayWindows.values()))
+    const updated = Array.from(overlayWindows.values())
+    stimulationService.setOverlayWindows(updated)
+    exerciseService.setOverlayWindows(updated)
   })
 }
 
@@ -86,6 +93,7 @@ export function closeOverlays(): void {
   }
   overlayWindows.clear()
   stimulationService.setOverlayWindows([])
+  exerciseService.setOverlayWindows([])
 }
 
 export function getOverlayWindows(): BrowserWindow[] {

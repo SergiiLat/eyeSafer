@@ -1,10 +1,46 @@
 export type StimulationMethod =
   | 'cornerMarkers' | 'blurOverlay' | 'movingObject' | 'colorShift'
   | 'figureEight' | 'nearFarFocus' | 'peripheralTriggers' | 'guidedBlink' | 'saccadeTraining'
+  | 'cornerFocus' | 'pseudoBlur' | 'brightnessShift' | 'peripheralDrift'
 
 export type Intensity = 'low' | 'medium' | 'high'
 
 export type ScheduleMode = 'intensive' | 'normal' | 'relaxed'
+
+export type EffectOrder = 'random' | 'sequential'
+
+export type ExerciseId = 'chinTuck' | 'chestOpener' | 'neckMassage' | 'shoulderRolls' | 'spinalTwist'
+
+
+
+export interface ExerciseStep {
+  imagePath: string
+  description: string
+}
+
+export interface ExerciseTrigger {
+  exerciseId: ExerciseId
+  title: string
+  subtitle: string
+  steps: ExerciseStep[]
+  durationSeconds: number
+}
+
+export interface ExerciseEvent {
+  id: number
+  sessionId: number | null
+  exerciseId: ExerciseId
+  triggeredAt: string
+  completed: boolean
+}
+
+export interface ExerciseDailySummary {
+  date: string
+  totalTriggered: number
+  totalCompleted: number
+  totalSkipped: number
+  completionRate: number
+}
 
 export interface BlinkData {
   bpm: number
@@ -45,9 +81,19 @@ export interface AppSettings {
   dndEnabled: boolean
   dndUntil: string | null  // ISO datetime string or null
 
+  // Active features
+  blinkEnabled: boolean
+  exercisesEnabled: boolean
+
   // Stimulation
   enabledMethods: Record<StimulationMethod, boolean>
   intensity: Intensity
+  effectOrder: EffectOrder
+
+  // Exercises
+  enabledExercises: Record<ExerciseId, boolean>
+  exerciseIntervalMinutes: number
+  exerciseOrder: EffectOrder
 
   // Schedule
   activeWindow: TimeWindow

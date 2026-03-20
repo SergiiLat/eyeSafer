@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**EyeSafer Desktop App** — prevents eye strain through blink monitoring and visual micro-stimulation.
+**HealthSafer Desktop App** — prevents eye strain through blink monitoring and visual micro-stimulation.
 
 - **Platform:** Windows (primary), macOS (secondary)
 - **Stack:** Electron 28 + Svelte 4 + Tailwind CSS 3 + TypeScript + MediaPipe
@@ -31,7 +31,7 @@ The app has three Electron processes with distinct roles:
 
 **Main process** (`src/main/`): Orchestrates everything. Key files:
 - `index.ts` — app lifecycle, single-instance lock, tray setup
-- `logger.ts` — electron-log configuration; log file at `%APPDATA%/eyesafer/logs/main.log`
+- `logger.ts` — electron-log configuration; log file at `%APPDATA%/healthsafer/logs/main.log`
 - `windows/overlay.ts` — spawns one transparent `BrowserWindow` per monitor; sets `ignoreMouseEvents(true)` after creation; recreates on display add/remove
 - `windows/camera.ts` — hidden `BrowserWindow` (`show: false`) that runs MediaPipe; in dev mode opens detached DevTools automatically
 - `windows/settings.ts` — frameless settings window (`frame: false`, custom title bar with minimize/maximize/close)

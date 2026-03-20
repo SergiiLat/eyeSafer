@@ -2,7 +2,8 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { IPC } from '../shared/ipc-channels'
 import type {
   AppSettings, StimulationMethod, CameraDevice, BlinkData, StimulationTrigger,
-  BlinkMinute, Session, DailySummary, WeeklySummary
+  BlinkMinute, Session, DailySummary, WeeklySummary,
+  ExerciseId, ExerciseEvent, ExerciseDailySummary
 } from '../shared/types'
 
 const api = {
@@ -45,6 +46,12 @@ const api = {
   // Stimulation
   testStimulation: (method: StimulationMethod): Promise<void> =>
     ipcRenderer.invoke(IPC.STIMULATION.TEST, method),
+
+  testStimulationLoop: (method: StimulationMethod, seconds: number): Promise<void> =>
+    ipcRenderer.invoke(IPC.STIMULATION.TEST_LOOP, method, seconds),
+
+  stopStimulationLoop: (): Promise<void> =>
+    ipcRenderer.invoke(IPC.STIMULATION.TEST_LOOP_STOP),
 
   onStimulationPlay: (callback: (trigger: StimulationTrigger) => void) => {
     const handler = (_: Electron.IpcRendererEvent, trigger: StimulationTrigger) => callback(trigger)
@@ -112,7 +119,17 @@ const api = {
     ipcRenderer.invoke(IPC.REPORTS.GET_WEEKLY, weekStart),
 
   exportReportCsv: (from: string, to: string): Promise<string | null> =>
-    ipcRenderer.invoke(IPC.REPORTS.EXPORT_CSV, from, to)
+    ipcRenderer.invoke(IPC.REPORTS.EXPORT_CSV, from, to),
+
+  // Exercises
+  testExercise: (exerciseId: ExerciseId): Promise<void> =>
+    ipcRenderer.invoke(IPC.EXERCISE.TEST, exerciseId),
+
+  getExerciseEvents: (date: string): Promise<ExerciseEvent[]> =>
+    ipcRenderer.invoke(IPC.EXERCISE.GET_EVENTS, date),
+
+  getExerciseSummary: (date: string): Promise<ExerciseDailySummary> =>
+    ipcRenderer.invoke(IPC.EXERCISE.GET_SUMMARY, date)
 }
 
 contextBridge.exposeInMainWorld('api', api)

@@ -5,6 +5,8 @@
   // ── State ─────────────────────────────────────────────────────────────────
   let selectedDate = todayStr()
   let targetBpm = 12
+  let timeFrom = '00:00'
+  let timeTo = '23:59'
   let minuteData: BlinkMinute[] = []
   let summary: DailySummary | null = null
   let sessions: Session[] = []
@@ -65,6 +67,44 @@
     }
   }
 
+  // ── Time filtering ─────────────────────────────────────────────────────────
+
+  function getLocalTimeStr(iso: string): string {
+    const d = new Date(iso)
+    return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
+  }
+
+  $: isFiltered = timeFrom !== '00:00' || timeTo !== '23:59'
+
+  $: filteredMinuteData = minuteData.filter(d => {
+    const t = getLocalTimeStr(d.minuteTs)
+    return t >= timeFrom && t <= timeTo
+  })
+
+  $: filteredSessions = sessions.filter(s => {
+    const startTime = getLocalTimeStr(s.startedAt)
+    const endTime = s.endedAt ? getLocalTimeStr(s.endedAt) : '23:59'
+    return startTime <= timeTo && endTime >= timeFrom
+  })
+
+  $: filteredSummary = ((): DailySummary | null => {
+    if (!isFiltered) return summary
+    if (filteredMinuteData.length === 0) return null
+    const avgBpm = filteredMinuteData.reduce((s, d) => s + d.bpm, 0) / filteredMinuteData.length
+    const totalBlinks = filteredMinuteData.reduce((s, d) => s + d.blinkCount, 0)
+    const lowBlinkMinutes = filteredMinuteData.filter(d => d.isLowBlink).length
+    const healthScore = Math.min(100, Math.round((avgBpm / 15) * 100))
+    return {
+      date: selectedDate,
+      totalScreenTimeMinutes: filteredMinuteData.length,
+      avgBpm,
+      totalBlinks,
+      lowBlinkMinutes,
+      stimulationsCount: null,
+      healthScore
+    }
+  })()
+
   // ── BPM Timeline Chart ────────────────────────────────────────────────────
 
   function drawChart() {
@@ -81,11 +121,11 @@
     ctx.scale(dpr, dpr)
     ctx.clearRect(0, 0, w, h)
 
-    if (minuteData.length === 0) {
+    if (filteredMinuteData.length === 0) {
       ctx.fillStyle = '#94a3b8'
       ctx.font = '14px system-ui'
       ctx.textAlign = 'center'
-      ctx.fillText('No data for this day', w / 2, h / 2)
+      ctx.fillText('No data for this period', w / 2, h / 2)
       return
     }
 
@@ -93,9 +133,9 @@
     const chartW = w - pad.left - pad.right
     const chartH = h - pad.top - pad.bottom
 
-    const bpmValues = minuteData.map(d => d.bpm)
+    const bpmValues = filteredMinuteData.map(d => d.bpm)
     const bpmMax = Math.max(...bpmValues, targetBpm * 1.5, 20)
-    const times = minuteData.map(d => new Date(d.minuteTs).getTime())
+    const times = filteredMinuteData.map(d => new Date(d.minuteTs).getTime())
     const tMin = times[0]
     const tMax = times[times.length - 1] || tMin + 1
 
@@ -120,8 +160,42 @@
       ctx.fillText(String(bpmLabel), pad.left - 6, y + 4)
     }
 
+    // Away-from-monitor zones: gaps > 3 min between consecutive records
+    const AWAY_GAP_MS = 3 * 60 * 1000
+    for (let i = 1; i < filteredMinuteData.length; i++) {
+      const t0 = times[i - 1]
+      const t1 = times[i]
+      if (t1 - t0 > AWAY_GAP_MS) {
+        const gapX0 = xScale(t0 + 60000) // start after the last recorded minute
+        const gapX1 = xScale(t1)
+        if (gapX1 > gapX0) {
+          ctx.fillStyle = 'rgba(100, 116, 139, 0.18)'
+          ctx.fillRect(gapX0, pad.top, gapX1 - gapX0, chartH)
+          // Striped overlay
+          ctx.strokeStyle = 'rgba(100, 116, 139, 0.12)'
+          ctx.lineWidth = 1
+          const stripeStep = 8
+          for (let sx = gapX0; sx < gapX1; sx += stripeStep) {
+            ctx.beginPath()
+            ctx.moveTo(sx, pad.top)
+            ctx.lineTo(sx, pad.top + chartH)
+            ctx.stroke()
+          }
+          // Label if wide enough
+          const gapW = gapX1 - gapX0
+          if (gapW > 36) {
+            const gapMinutes = Math.round((t1 - t0) / 60000)
+            ctx.fillStyle = 'rgba(148, 163, 184, 0.7)'
+            ctx.font = '9px system-ui'
+            ctx.textAlign = 'center'
+            ctx.fillText(`away ${gapMinutes}m`, gapX0 + gapW / 2, pad.top + chartH / 2 + 4)
+          }
+        }
+      }
+    }
+
     // Area fills: green above target, red below
-    for (let i = 1; i < minuteData.length; i++) {
+    for (let i = 1; i < filteredMinuteData.length; i++) {
       const x0 = xScale(times[i - 1])
       const x1 = xScale(times[i])
       const y0 = yScale(bpmValues[i - 1])
@@ -152,7 +226,7 @@
     ctx.strokeStyle = '#60a5fa'
     ctx.lineWidth = 1.5
     ctx.beginPath()
-    minuteData.forEach((d, i) => {
+    filteredMinuteData.forEach((d, i) => {
       const x = xScale(times[i])
       const y = yScale(d.bpm)
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
@@ -176,12 +250,12 @@
     ctx.fillText(`target ${targetBpm}`, w - pad.right + 2, yTarget + 4)
 
     // Time axis labels
-    const labelCount = Math.min(minuteData.length, 6)
+    const labelCount = Math.min(filteredMinuteData.length, 6)
     ctx.fillStyle = '#94a3b8'
     ctx.font = '10px system-ui'
     ctx.textAlign = 'center'
     for (let i = 0; i < labelCount; i++) {
-      const idx = Math.round((i / (labelCount - 1)) * (minuteData.length - 1))
+      const idx = Math.round((i / (labelCount - 1)) * (filteredMinuteData.length - 1))
       const x = xScale(times[idx])
       const t = new Date(times[idx])
       const label = `${t.getHours().toString().padStart(2, '0')}:${t.getMinutes().toString().padStart(2, '0')}`
@@ -190,17 +264,17 @@
   }
 
   function handleCanvasMouseMove(e: MouseEvent) {
-    if (!canvas || minuteData.length === 0) return
+    if (!canvas || filteredMinuteData.length === 0) return
     const rect = canvas.getBoundingClientRect()
     const mouseX = e.clientX - rect.left
     const pad = { left: 44, right: 16 }
     const chartW = rect.width - pad.left - pad.right
-    const times = minuteData.map(d => new Date(d.minuteTs).getTime())
+    const times = filteredMinuteData.map(d => new Date(d.minuteTs).getTime())
     const tMin = times[0]
     const tMax = times[times.length - 1]
     const t = tMin + ((mouseX - pad.left) / chartW) * (tMax - tMin)
 
-    const closest = minuteData.reduce((prev, curr, i) =>
+    const closest = filteredMinuteData.reduce((prev, curr, i) =>
       Math.abs(times[i] - t) < Math.abs(new Date(prev.minuteTs).getTime() - t) ? curr : prev
     )
     const d = new Date(closest.minuteTs)
@@ -254,7 +328,7 @@
 
   // ── Reactive ───────────────────────────────────────────────────────────────
   $: if (selectedDate) loadData()
-  $: if (targetBpm && canvas) drawChart()
+  $: filteredMinuteData && targetBpm && canvas && drawChart()
 
   let resizeObserver: ResizeObserver
   onMount(() => {
@@ -271,26 +345,51 @@
       <h2 class="text-lg font-semibold text-white mb-1">Reports</h2>
       <p class="text-sm text-surface-200">Blink rate history and session data</p>
     </div>
-    <div class="flex items-center gap-2">
-      <button on:click={prevDay} class="p-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-surface-200 hover:text-white transition-colors">◀</button>
-      <button
-        on:click={() => { selectedDate = todayStr() }}
-        class="px-3 py-1.5 text-sm rounded-lg bg-surface-800 hover:bg-surface-700 text-white transition-colors font-medium"
-      >
-        {selectedDate === todayStr() ? 'Today' : formatDate(selectedDate)}
-      </button>
-      <button
-        on:click={nextDay}
-        class="p-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-surface-200 hover:text-white transition-colors
-               {selectedDate >= todayStr() ? 'opacity-40 cursor-not-allowed' : ''}"
-        disabled={selectedDate >= todayStr()}
-      >▶</button>
-      <input
-        type="date"
-        bind:value={selectedDate}
-        max={todayStr()}
-        class="bg-surface-800 border border-surface-700 text-white text-sm rounded-lg px-2.5 py-1.5"
-      />
+    <div class="flex flex-col items-end gap-2">
+      <!-- Date navigation -->
+      <div class="flex items-center gap-2">
+        <button on:click={prevDay} class="p-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-surface-200 hover:text-white transition-colors">◀</button>
+        <button
+          on:click={() => { selectedDate = todayStr() }}
+          class="px-3 py-1.5 text-sm rounded-lg bg-surface-800 hover:bg-surface-700 text-white transition-colors font-medium"
+        >
+          {selectedDate === todayStr() ? 'Today' : formatDate(selectedDate)}
+        </button>
+        <button
+          on:click={nextDay}
+          class="p-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-surface-200 hover:text-white transition-colors
+                 {selectedDate >= todayStr() ? 'opacity-40 cursor-not-allowed' : ''}"
+          disabled={selectedDate >= todayStr()}
+        >▶</button>
+        <input
+          type="date"
+          bind:value={selectedDate}
+          max={todayStr()}
+          class="bg-surface-800 border border-surface-700 text-white text-sm rounded-lg px-2.5 py-1.5"
+        />
+      </div>
+      <!-- Time range filter -->
+      <div class="flex items-center gap-2 text-sm">
+        <span class="text-surface-400 text-xs">From</span>
+        <input
+          type="time"
+          bind:value={timeFrom}
+          class="bg-surface-800 border border-surface-700 text-white text-sm rounded-lg px-2 py-1"
+        />
+        <span class="text-surface-400 text-xs">To</span>
+        <input
+          type="time"
+          bind:value={timeTo}
+          class="bg-surface-800 border border-surface-700 text-white text-sm rounded-lg px-2 py-1"
+        />
+        {#if isFiltered}
+          <button
+            on:click={() => { timeFrom = '00:00'; timeTo = '23:59' }}
+            class="px-2 py-1 text-xs rounded-lg bg-surface-700 hover:bg-surface-600 text-surface-300 hover:text-white transition-colors"
+            title="Clear time filter"
+          >✕ Clear</button>
+        {/if}
+      </div>
     </div>
   </div>
 
@@ -303,15 +402,15 @@
     <!-- Summary Cards -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {#each [
-        { label: 'Screen Time', value: formatDuration(summary?.totalScreenTimeMinutes ? summary.totalScreenTimeMinutes * 60 : null), prevVal: prevSummary?.totalScreenTimeMinutes ?? null, curVal: summary?.totalScreenTimeMinutes ?? null, higherBetter: true },
-        { label: 'Avg BPM', value: summary?.avgBpm != null ? (Math.round(summary.avgBpm * 10) / 10).toString() : '—', prevVal: prevSummary?.avgBpm ?? null, curVal: summary?.avgBpm ?? null, higherBetter: true },
-        { label: 'Total Blinks', value: summary?.totalBlinks?.toLocaleString() ?? '—', prevVal: prevSummary?.totalBlinks ?? null, curVal: summary?.totalBlinks ?? null, higherBetter: true },
-        { label: 'Health Score', value: summary?.healthScore != null ? `${summary.healthScore}/100` : '—', prevVal: prevSummary?.healthScore ?? null, curVal: summary?.healthScore ?? null, higherBetter: true }
+        { label: 'Screen Time', value: formatDuration(filteredSummary?.totalScreenTimeMinutes ? filteredSummary.totalScreenTimeMinutes * 60 : null), prevVal: prevSummary?.totalScreenTimeMinutes ?? null, curVal: filteredSummary?.totalScreenTimeMinutes ?? null, higherBetter: true },
+        { label: 'Avg BPM', value: filteredSummary?.avgBpm != null ? (Math.round(filteredSummary.avgBpm * 10) / 10).toString() : '—', prevVal: prevSummary?.avgBpm ?? null, curVal: filteredSummary?.avgBpm ?? null, higherBetter: true },
+        { label: 'Total Blinks', value: filteredSummary?.totalBlinks?.toLocaleString() ?? '—', prevVal: prevSummary?.totalBlinks ?? null, curVal: filteredSummary?.totalBlinks ?? null, higherBetter: true },
+        { label: 'Health Score', value: filteredSummary?.healthScore != null ? `${filteredSummary.healthScore}/100` : '—', prevVal: prevSummary?.healthScore ?? null, curVal: filteredSummary?.healthScore ?? null, higherBetter: true }
       ] as card}
         <div class="p-4 bg-surface-800 rounded-xl border border-surface-700">
           <p class="text-xs text-surface-400 mb-1">{card.label}</p>
           <p class="text-xl font-bold text-white">{card.value}</p>
-          {#if card.prevVal !== null && card.curVal !== null}
+          {#if !isFiltered && card.prevVal !== null && card.curVal !== null}
             <p class="text-xs mt-1 {deltaClass(card.curVal, card.prevVal, card.higherBetter)}">
               {delta(card.curVal, card.prevVal)} vs yesterday
             </p>
@@ -325,8 +424,8 @@
       <div class="flex items-center justify-between mb-3">
         <div>
           <span class="text-sm font-medium text-white">BPM Timeline</span>
-          {#if summary?.avgBpm != null}
-            <span class="text-surface-400 text-sm ml-2">avg {Math.round(summary.avgBpm * 10) / 10} BPM</span>
+          {#if filteredSummary?.avgBpm != null}
+            <span class="text-surface-400 text-sm ml-2">avg {Math.round(filteredSummary.avgBpm * 10) / 10} BPM</span>
           {/if}
         </div>
         <div class="flex items-center gap-2">
@@ -360,14 +459,15 @@
         {/if}
       </div>
 
-      <div class="flex gap-4 mt-2 text-xs">
+      <div class="flex flex-wrap gap-4 mt-2 text-xs text-surface-300">
         <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-green-500/40 inline-block"></span> Above target</span>
         <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-red-500/40 inline-block"></span> Below target</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-slate-500/30 border border-slate-500/30 inline-block"></span> Away from monitor</span>
       </div>
     </div>
 
     <!-- Session History Table -->
-    {#if sessions.length > 0}
+    {#if filteredSessions.length > 0}
       <div class="bg-surface-800 rounded-xl border border-surface-700 overflow-hidden">
         <div class="px-4 py-3 border-b border-surface-700">
           <h3 class="text-sm font-medium text-white">Sessions</h3>
@@ -385,7 +485,7 @@
               </tr>
             </thead>
             <tbody>
-              {#each sessions as session}
+              {#each filteredSessions as session}
                 <tr class="border-b border-surface-700/50 hover:bg-surface-700/30 transition-colors">
                   <td class="px-4 py-2.5 text-surface-200">{formatTime(session.startedAt)}</td>
                   <td class="px-4 py-2.5 text-surface-200">{session.endedAt ? formatTime(session.endedAt) : '—'}</td>
@@ -403,16 +503,22 @@
       </div>
     {/if}
 
-    {#if minuteData.length === 0 && !loading}
+    {#if filteredMinuteData.length === 0 && !loading}
       <div class="flex flex-col items-center justify-center py-16 text-center">
         <div class="text-4xl mb-3">📊</div>
-        <p class="text-surface-200 text-sm">No data for {formatDate(selectedDate)}</p>
-        <p class="text-surface-400 text-xs mt-1">Data is recorded while EyeSafer is running and your camera is active.</p>
+        <p class="text-surface-200 text-sm">
+          {#if minuteData.length > 0 && isFiltered}
+            No data between {timeFrom} and {timeTo}
+          {:else}
+            No data for {formatDate(selectedDate)}
+          {/if}
+        </p>
+        <p class="text-surface-400 text-xs mt-1">Data is recorded while HealthSafer is running and your camera is active.</p>
       </div>
     {/if}
 
     <!-- Export -->
-    {#if minuteData.length > 0}
+    {#if filteredMinuteData.length > 0}
       <div class="flex justify-end">
         <button
           on:click={async () => {

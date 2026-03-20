@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC } from '../shared/ipc-channels'
-import type { StimulationTrigger } from '../shared/types'
+import type { StimulationTrigger, ExerciseTrigger, ExerciseId } from '../shared/types'
 
 const overlay = {
   onTrigger: (callback: (trigger: StimulationTrigger) => void) => {
@@ -21,6 +21,26 @@ const overlay = {
 
   twentyDone: (): void => {
     ipcRenderer.send(IPC.TWENTY.DONE)
+  },
+
+  onExerciseTrigger: (callback: (exercise: ExerciseTrigger) => void) => {
+    const handler = (_: Electron.IpcRendererEvent, exercise: ExerciseTrigger) => callback(exercise)
+    ipcRenderer.on(IPC.EXERCISE.PLAY, handler)
+    return () => ipcRenderer.removeListener(IPC.EXERCISE.PLAY, handler)
+  },
+
+  onExerciseDismiss: (callback: () => void) => {
+    const handler = () => callback()
+    ipcRenderer.on(IPC.EXERCISE.DISMISS, handler)
+    return () => ipcRenderer.removeListener(IPC.EXERCISE.DISMISS, handler)
+  },
+
+  exerciseDone: (exerciseId: ExerciseId): void => {
+    ipcRenderer.send(IPC.EXERCISE.DONE, exerciseId)
+  },
+
+  exerciseSkip: (exerciseId: ExerciseId): void => {
+    ipcRenderer.send(IPC.EXERCISE.SKIP, exerciseId)
   }
 }
 

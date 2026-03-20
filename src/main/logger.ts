@@ -2,8 +2,8 @@ import log from 'electron-log'
 import { app } from 'electron'
 import { join } from 'path'
 
-// Write logs to: %APPDATA%\eyesafer\logs\  (Windows)
-//                ~/Library/Logs/eyesafer/  (macOS)
+// Write logs to: %APPDATA%\healthsafer\logs\  (Windows)
+//                ~/Library/Logs/healthsafer/  (macOS)
 log.transports.file.resolvePathFn = () =>
   join(app.getPath('logs'), 'main.log')
 

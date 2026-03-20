@@ -11,7 +11,7 @@ export class TrayManager {
     const icon = nativeImage.createFromPath(iconPath)
 
     this.tray = new Tray(icon.isEmpty() ? nativeImage.createEmpty() : icon)
-    this.tray.setToolTip('EyeSafer — Eye Care Protection')
+    this.tray.setToolTip('HealthSafer — Eye Care Protection')
     this.buildMenu()
 
     this.tray.on('double-click', () => {
@@ -61,7 +61,7 @@ export class TrayManager {
       },
       { type: 'separator' },
       {
-        label: 'Quit EyeSafer',
+        label: 'Quit HealthSafer',
         click: () => app.quit()
       }
     ])
@@ -92,7 +92,7 @@ export class TrayManager {
   updateBpm(bpm: number): void {
     if (!this.tray) return
     const status = bpm < 8 ? ' ⚠' : ''
-    this.tray.setToolTip(`EyeSafer — ${bpm} BPM${status}`)
+    this.tray.setToolTip(`HealthSafer — ${bpm} BPM${status}`)
   }
 
   destroy(): void {

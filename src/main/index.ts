@@ -7,6 +7,7 @@ import { registerIpcHandlers } from './ipc-handlers'
 import { storeService } from './services/store.service'
 import { schedulerService } from './services/scheduler.service'
 import { stimulationService } from './services/stimulation.service'
+import { exerciseSchedulerService } from './services/exercise-scheduler.service'
 import { twentyTwentyService } from './services/twenty.service'
 import { databaseService } from './services/database.service'
 import { trayManager } from './tray'
@@ -23,7 +24,7 @@ app.on('second-instance', () => {
 })
 
 app.whenReady().then(async () => {
-  log.info('EyeSafer starting up')
+  log.info('HealthSafer starting up')
   log.info(`Log file: ${getLogPath()}`)
 
   // Initialize database
@@ -35,7 +36,7 @@ app.whenReady().then(async () => {
     log.error(err instanceof Error ? err.stack ?? '' : String(err))
   }
 
-  electronApp.setAppUserModelId('com.eyesafer.app')
+  electronApp.setAppUserModelId('com.healthsafer.app')
 
   // Disable default keyboard shortcuts in production
   app.on('browser-window-created', (_, window) => {
@@ -57,9 +58,13 @@ app.whenReady().then(async () => {
   spawnOverlays()
   log.info('Overlay windows spawned')
 
-  // Start the scheduler
+  // Start the blink scheduler
   schedulerService.start()
   log.info('Scheduler started')
+
+  // Start exercise scheduler
+  exerciseSchedulerService.start()
+  log.info('Exercise scheduler started')
 
   // Start 20-20-20 rule timer
   twentyTwentyService.start()
@@ -105,8 +110,9 @@ app.on('window-all-closed', () => {
 })
 
 app.on('before-quit', () => {
-  log.info('EyeSafer shutting down')
+  log.info('HealthSafer shutting down')
   globalShortcut.unregisterAll()
+  exerciseSchedulerService.stop()
   twentyTwentyService.stop()
   databaseService.close()
   closeOverlays()
